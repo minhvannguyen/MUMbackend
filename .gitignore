@@ -1,0 +1,40 @@
+﻿# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+bin/
+obj/
+out/
+
+# Environment files
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+
+# User secrets (nếu dùng)
+secrets.json
+
+client_secret.json
+client_secret_web.json
+token.json
+
+# OS
+Thumbs.db
+.DS_Store
+
+
+# Secrets
+client_secret_web.json
+client_secret.json
+token.json
+*.p12
+*.pem
+
+# Build output
+bin/
+obj/
+.vs/
