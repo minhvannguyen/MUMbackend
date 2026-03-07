@@ -7,10 +7,13 @@ namespace MUMbackend.Models
     public class UserExternalLogin
     {
         [Key]
-        public long Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("Id", TypeName = "bigint")]
+        public int Id { get; set; }
 
         [ForeignKey("User")]
-        public long UserId { get; set; }
+        [Column("UserId", TypeName = "bigint")]
+        public int UserId { get; set; }
 
         [Required]
         [MaxLength(50)]

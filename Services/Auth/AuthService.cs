@@ -144,9 +144,9 @@ public async Task<User> LinkOrCreateExternalUserAsync(string provider, string pr
     return user;
 }
 
-        public async Task<UserDto?> MeDtoAsync(string email)
+        public async Task<UserDto?> MeDtoAsync(int userId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
                 if (user == null) return null;
 

@@ -25,7 +25,6 @@ namespace MUMbackend.Mappers
         public static void ToEntityUpdate(User user, UserDto dto)
         {
             user.Username = dto.Username;
-            user.Email = dto.Email;
             user.Bio = dto.Bio;
             user.UpdatedAt = DateTime.Now;
         }

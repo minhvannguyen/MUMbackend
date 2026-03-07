@@ -21,8 +21,16 @@ namespace MUMbackend.Services
             if (file == null || file.Length == 0)
                 throw new ArgumentException("File không hợp lệ!");
 
-            // 🗂️ Gốc upload: wwwroot/uploads/profileImages
-            var uploadPath = Path.Combine(_env.WebRootPath, "uploads", subFolder);
+            // 🗂️ Nếu WebRootPath null, sử dụng ContentRootPath và tạo wwwroot
+            string basePath = _env.WebRootPath;
+            if (string.IsNullOrEmpty(basePath))
+            {
+                basePath = Path.Combine(_env.ContentRootPath, "wwwroot");
+                if (!Directory.Exists(basePath))
+                    Directory.CreateDirectory(basePath);
+            }
+
+            var uploadPath = Path.Combine(basePath, "uploads", subFolder);
             if (!Directory.Exists(uploadPath))
                 Directory.CreateDirectory(uploadPath);
 

@@ -193,7 +193,8 @@ public async Task<IActionResult> GoogleIdToken([FromBody] GoogleTokenRequest req
 
     var claims = new List<Claim>
     {
-        new Claim(ClaimTypes.NameIdentifier, user.Email),
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Email, user.Email),
         new Claim(ClaimTypes.Name, user.Username),
         new Claim(ClaimTypes.Role, user.Role),
         new Claim("AccessToken", accessToken),
@@ -219,14 +220,24 @@ public async Task<IActionResult> GoogleIdToken([FromBody] GoogleTokenRequest req
 }
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> me()
+        public async Task<IActionResult> Me()
         {
-            var email = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(email))
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
                 return Unauthorized(new { message = "Chưa đăng nhập!" });
 
-            var meDto = await _authService.MeDtoAsync(email);
-            return Ok(new ApiResponse<UserDto>(true, "Lấy thông tin người dùng thành công!", meDto));
+            if (!int.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "Token không hợp lệ!" });
+
+            var meDto = await _authService.MeDtoAsync(userId);
+
+            return Ok(new ApiResponse<UserDto>(
+                true,
+                "Lấy thông tin người dùng thành công!",
+                meDto
+            ));
         }
+
     }
 }

@@ -8,13 +8,14 @@ namespace MUMbackend.Models.Auth
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public long Id { get; set; }
+        [Column("Id", TypeName = "bigint")]
+        public int Id { get; set; }
 
         [Required]
         public string Token { get; set; }
 
         [Required]
-        public long UserId { get; set; }
+        public int UserId { get; set; }
 
         [Required]
         public DateTime ExpiryDate { get; set; }

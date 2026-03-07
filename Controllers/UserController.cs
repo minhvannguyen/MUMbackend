@@ -38,14 +38,40 @@ namespace MUMbackend.Controllers
 
         // ✅ Lấy user theo ID
         [HttpGet("{id}")]
-        [Authorize] // Yêu cầu đăng nhập
-        public async Task<ActionResult<ApiResponse<UserDto>>> GetUser(long id)
+        public async Task<ActionResult<ApiResponse<UserDto>>> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id);
+
             if (user == null)
                 return NotFound(ApiResponse<UserDto>.Fail("Không tìm thấy user!"));
 
-            return Ok(ApiResponse<UserDto>.Ok("Lấy thông tin user thành công!", UserMapper.ToDto(user)));
+            var totalSongs = await _context.Songs
+                .CountAsync(s => s.ArtistId == id);
+
+            var totalPlaylists = await _context.Playlists
+                .CountAsync(p => p.UserId == id);
+
+            var totalFollowing = await _context.Follows
+                .CountAsync(f => f.FollowerId == id);
+
+            var totalFollowers = await _context.Follows
+                .CountAsync(f => f.FollowingId == id);
+
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                AvatarUrl = user.AvatarUrl,
+                Email = user.Email,
+                Bio = user.Bio,
+                TotalSongs = totalSongs,
+                TotalPlaylists = totalPlaylists,
+                TotalFollowing = totalFollowing,
+                TotalFollowers = totalFollowers
+            };
+
+            return Ok(ApiResponse<UserDto>.Ok("Lấy thông tin user thành công!", userDto));
         }
 
         // ✅ Tạo user mới
@@ -65,8 +91,9 @@ namespace MUMbackend.Controllers
 
         // ✅ Cập nhật user
         [HttpPut("{id}")]
+        [Authorize] // Yêu cầu đăng nhập
         public async Task<ActionResult<ApiResponse<UserDto>>> UpdateUser(
-            long id,
+            int id,
             [FromForm] UserDto userDto,
             IFormFile? avatar,
             [FromServices] IFileService fileService)
@@ -84,15 +111,15 @@ namespace MUMbackend.Controllers
                     return BadRequest(ApiResponse<UserDto>.Fail("Email đã tồn tại!"));
             }
 
+            // 4️⃣ Cập nhật các thông tin khác
+            UserMapper.ToEntityUpdate(existingUser, userDto);
+
             // 3️⃣ Nếu có ảnh mới → upload vào wwwroot/uploads/profileImages
             if (avatar != null)
             {
                 var imagePath = await fileService.UploadImageAsync(avatar, "profileImages");
                 existingUser.AvatarUrl = imagePath;
             }
-
-            // 4️⃣ Cập nhật các thông tin khác
-            UserMapper.ToEntityUpdate(existingUser, userDto);
 
             try
             {
@@ -109,7 +136,7 @@ namespace MUMbackend.Controllers
 
         // ✅ Xóa user
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteUser(long id)
+        public async Task<ActionResult<ApiResponse<object>>> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
@@ -119,6 +146,46 @@ namespace MUMbackend.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(ApiResponse<object>.Ok("Xóa user thành công!"));
+        }
+
+        // ✅ Tìm kiếm user theo tên
+        [HttpGet]
+        public async Task<ActionResult<ApiResponse<PagedResult<UserDto>>>> SearchUsersByName(
+            string keyword,
+            int page = 1,
+            int pageSize = 20)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+                return BadRequest(ApiResponse<PagedResult<UserDto>>.Fail("Keyword không được để trống!"));
+
+            var query = _context.Users
+                .Where(u => EF.Functions.Like(u.Username, $"%{keyword}%"));
+
+            var total = await query.CountAsync();
+
+            var users = await query
+                .OrderBy(u => u.Username)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var userDtos = await query
+        .OrderBy(u => u.Username)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .Select(u => UserMapper.ToDto(u))
+        .ToListAsync();
+
+            var result = new PagedResult<UserDto>
+            {
+                Data = userDtos,
+                Total = total,
+                Page = page,
+                PageSize = pageSize
+            };
+
+            return Ok(ApiResponse<PagedResult<UserDto>>
+                .Ok("Tìm kiếm user thành công!", result));
         }
     }
 }

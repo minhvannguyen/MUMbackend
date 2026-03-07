@@ -8,8 +8,8 @@ namespace MUMbackend.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Column("Id")]
-        public long Id { get; set; }
+       [Column("Id", TypeName = "bigint")]
+        public int Id { get; set; }
 
         [Required]
         [Column("Username", TypeName = "nvarchar(100)")]
@@ -37,5 +37,11 @@ namespace MUMbackend.Models
 
         [Column("UpdatedAt", TypeName = "datetime")]
         public DateTime? UpdatedAt { get; set; }
+        [Column("IsActive", TypeName = "bit")]
+        public bool IsActive { get; set; } = true;
+
+        public ICollection<Follow> Followers { get; set; }
+        public ICollection<Follow> Following { get; set; }
+        public ICollection<SavedPlaylist> SavedPlaylists { get; set; }
     }
 }

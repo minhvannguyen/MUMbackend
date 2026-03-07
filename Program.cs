@@ -2,12 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using MUMbackend.Data;
 using MUMbackend.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using MUMbackend.Services.Auth;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Security.Claims;
+using Microsoft.AspNetCore.StaticFiles;
+using MUMbackend.Hubs;
+using Microsoft.AspNetCore.SignalR;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,9 +53,20 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<VerificationService>();
 builder.Services.AddScoped<GmailService>();
-
+builder.Services.AddScoped<PlaylistService>();
+builder.Services.AddScoped<LikeService, LikeService>();
+builder.Services.AddAutoMapper(typeof(Program)); // Tự động quét tất cả Profile
+builder.Services.AddScoped<CommentService>();
+builder.Services.AddScoped<IFollowService, FollowService>();
+builder.Services.AddScoped<RecommendationService>();
+builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<ISavedPlaylistService, SavedPlaylistService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 // ✅ Thêm HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<ToxicCommentService>();
 
 // ✅ Đăng ký CookieTokenService
 builder.Services.AddScoped<CookieTokenService>();
@@ -143,6 +154,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// ✅ Phục vụ static files từ wwwroot
+app.UseStaticFiles();
+
 // ✅ Kích hoạt Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
@@ -167,6 +181,26 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub")
+    .RequireAuthorization();
+
+var contentTypeProvider = new FileExtensionContentTypeProvider();
+contentTypeProvider.Mappings[".mp3"] = "audio/mpeg";
+
+// Static files trong wwwroot (ví dụ /uploads/songs/...)
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = contentTypeProvider,
+    OnPrepareResponse = ctx =>
+    {
+        // CORS cho FE
+        ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "http://localhost:3000");
+        ctx.Context.Response.Headers.Append("Access-Control-Allow-Credentials", "true");
+
+        // Streaming range requests cho audio
+        ctx.Context.Response.Headers.Append("Accept-Ranges", "bytes");
+    }
+});
 
 app.Run();
 
