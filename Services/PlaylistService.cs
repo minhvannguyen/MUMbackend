@@ -44,9 +44,25 @@ namespace MUMbackend.Services
         }
 
         // PlaylistService.cs
-        public async Task<(IEnumerable<Playlist> Items, int TotalItems)> GetPagedAsync(int pageNumber, int pageSize)
+        public async Task<(IEnumerable<PlaylistResponseDto> Items, int TotalItems)> GetPagedAsync(int pageNumber, int pageSize)
         {
-            var query = _context.Playlists.AsQueryable();
+            var query = from p in _context.Playlists
+                        join u in _context.Users
+                        on p.UserId equals u.Id
+                        select new PlaylistResponseDto
+                        {
+                            Id = p.Id,
+                            UserId = p.UserId,
+                            Name = p.Name,
+                            Description = p.Description,
+                            CoverUrl = p.CoverUrl,
+                            IsPublic = p.IsPublic,
+                            SaveCount = p.SaveCount,
+                            TotalViews = p.TotalViews,
+                            SongCount = p.PlaylistSongs.Count(),
+                            CreatedAt = p.CreatedAt,
+                            Creator = u.Username   // 🔥 lấy tên creator
+                        };
 
             var totalItems = await query.CountAsync();
 
@@ -356,10 +372,10 @@ namespace MUMbackend.Services
                         p.SetProperty(x => x.TotalViews, x => x.TotalViews + 1));
             }
         }
-    
-    
 
-    public async Task<bool> IncrementViewAsync(int playlistId)
+
+
+        public async Task<bool> IncrementViewAsync(int playlistId)
         {
             if (playlistId <= 0)
                 return false;
@@ -379,6 +395,8 @@ namespace MUMbackend.Services
     int pageSize,
     int? userId)
         {
+            keyword = keyword?.Trim();
+
             var query = _context.Playlists
                 .Where(p => p.IsPublic &&
                             EF.Functions.Like(p.Name, $"%{keyword}%"))
@@ -386,66 +404,37 @@ namespace MUMbackend.Services
 
             var totalItems = await query.CountAsync();
 
-            if (totalItems == 0)
-                return new PagedResponse<object>(
-                    new List<object>(),
-                    page,
-                    pageSize,
-                    0);
-
             var playlists = await query
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new
                 {
-                    p.Id,
-                    p.UserId,
-                    p.Name,
-                    p.Description,
-                    p.CoverUrl,
-                    p.CreatedAt,
-                    p.IsPublic,
-                    p.TotalViews,
-                    p.SaveCount,
-                    SongCount = p.PlaylistSongs.Count()
+                    id = p.Id,
+                    userId = p.UserId,
+                    creator = p.User.Username, // 🔥 lấy creator
+                    name = p.Name,
+                    description = p.Description,
+                    coverUrl = p.CoverUrl,
+                    createdAt = p.CreatedAt,
+                    isPublic = p.IsPublic,
+                    totalViews = p.TotalViews,
+                    saveCount = p.SaveCount,
+
+                    songCount = p.PlaylistSongs.Count(),
+
+                    isSaved = userId != null &&
+                        _context.SavedPlaylists
+                            .Any(sp => sp.UserId == userId &&
+                                       sp.PlaylistId == p.Id)
                 })
                 .ToListAsync();
 
-            var playlistIds = playlists.Select(p => p.Id).ToList();
-
-            HashSet<int> savedIds = new();
-
-            if (userId.HasValue)
-            {
-                savedIds = (await _context.SavedPlaylists
-                    .Where(sp => sp.UserId == userId.Value &&
-                                 playlistIds.Contains(sp.PlaylistId))
-                    .Select(sp => sp.PlaylistId)
-                    .ToListAsync())
-                    .ToHashSet();
-            }
-
-            var result = playlists.Select(p => new
-            {
-                id = p.Id,
-                userId = p.UserId,
-                name = p.Name,
-                description = p.Description,
-                coverUrl = p.CoverUrl,
-                createdAt = p.CreatedAt,
-                isPublic = p.IsPublic,
-                totalViews = p.TotalViews,
-                saveCount = p.SaveCount,
-                songCount = p.SongCount,
-                isSaved = userId.HasValue && savedIds.Contains(p.Id)
-            });
-
             return new PagedResponse<object>(
-                result,
+                playlists,
                 page,
                 pageSize,
                 totalItems);
         }
     }
-}
+    }

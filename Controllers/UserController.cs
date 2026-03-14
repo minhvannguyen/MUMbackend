@@ -24,16 +24,35 @@ namespace MUMbackend.Controllers
 
         // ✅ Lấy tất cả user
         [HttpGet]
-        [Authorize] // Yêu cầu đăng nhập
-        public async Task<ActionResult<ApiResponse<IEnumerable<UserDto>>>> GetUsers()
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResponse<UserDto>>>> GetUsers(
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 10)
         {
-            var users = await _context.Users.ToListAsync();
+            var query = _context.Users.AsNoTracking();
 
-            if (!users.Any())
-                return Ok(ApiResponse<IEnumerable<UserDto>>.Ok("Không có user nào!", new List<UserDto>()));
+            var totalItems = await query.CountAsync();
+
+            var users = await query
+                .OrderByDescending(s => s.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+                
 
             var userDtos = users.Select(UserMapper.ToDto).ToList();
-            return Ok(ApiResponse<IEnumerable<UserDto>>.Ok("Lấy thông tin user thành công!", userDtos));
+
+            var pagedUsers = new PagedResponse<UserDto>(
+                userDtos,
+                page,
+                pageSize,
+                totalItems
+            );
+
+            return Ok(ApiResponse<PagedResponse<UserDto>>.Ok(
+                "Lấy danh sách user thành công!",
+                pagedUsers
+            ));
         }
 
         // ✅ Lấy user theo ID
@@ -65,6 +84,8 @@ namespace MUMbackend.Controllers
                 AvatarUrl = user.AvatarUrl,
                 Email = user.Email,
                 Bio = user.Bio,
+                CreatedAt = user.CreatedAt,
+                IsActive = user.IsActive,
                 TotalSongs = totalSongs,
                 TotalPlaylists = totalPlaylists,
                 TotalFollowing = totalFollowing,
@@ -76,17 +97,57 @@ namespace MUMbackend.Controllers
 
         // ✅ Tạo user mới
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<UserDto>>> CreateUser([FromBody] UserCreateDto userCreateDto)
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<UserDto>>> CreateUser(
+            [FromForm] UserDto userDto,
+            IFormFile? avatar,
+            [FromServices] IFileService fileService,
+            [FromServices] PasswordService passwordService)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == userCreateDto.Email))
+            // 1️⃣ Kiểm tra email đã tồn tại
+            bool emailExists = await _context.Users
+                .AnyAsync(u => u.Email == userDto.Email);
+
+            if (emailExists)
                 return BadRequest(ApiResponse<UserDto>.Fail("Email đã tồn tại!"));
 
-            var user = UserMapper.ToEntityCreate(userCreateDto);
-            user.Password = _passwordService.Hash(userCreateDto.Password);
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            // 2️⃣ Map DTO → Entity
+            var user = UserMapper.ToEntity(userDto);
 
-            return Ok(ApiResponse<UserDto>.Ok("Tạo user thành công!", UserMapper.ToDto(user)));
+            // 3️⃣ Hash password
+            if (!string.IsNullOrWhiteSpace(userDto.Password))
+            {
+                user.Password = passwordService.Hash(userDto.Password);
+            }
+
+            // 4️⃣ Upload avatar nếu có
+            if (avatar != null)
+            {
+                var imagePath = await fileService.UploadImageAsync(avatar, "profileImages");
+                user.AvatarUrl = imagePath;
+            }
+
+            // 5️⃣ Set giá trị mặc định
+            user.CreatedAt = DateTime.UtcNow;
+
+            // 6️⃣ Lưu database
+            _context.Users.Add(user);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500,
+                    ApiResponse<UserDto>.Fail($"Lỗi khi tạo user: {ex.InnerException?.Message ?? ex.Message}")
+                );
+            }
+
+            return Ok(ApiResponse<UserDto>.Ok(
+                "Tạo user thành công!",
+                UserMapper.ToDto(user)
+            ));
         }
 
         // ✅ Cập nhật user
@@ -96,7 +157,8 @@ namespace MUMbackend.Controllers
             int id,
             [FromForm] UserDto userDto,
             IFormFile? avatar,
-            [FromServices] IFileService fileService)
+            [FromServices] IFileService fileService,
+            [FromServices] PasswordService passwordService)
         {
             var existingUser = await _context.Users.FindAsync(id);
             if (existingUser == null)
@@ -113,6 +175,12 @@ namespace MUMbackend.Controllers
 
             // 4️⃣ Cập nhật các thông tin khác
             UserMapper.ToEntityUpdate(existingUser, userDto);
+
+            // 3️⃣ Hash password
+            if (!string.IsNullOrWhiteSpace(userDto.Password))
+            {
+                existingUser.Password = passwordService.Hash(userDto.Password);
+            }
 
             // 3️⃣ Nếu có ảnh mới → upload vào wwwroot/uploads/profileImages
             if (avatar != null)

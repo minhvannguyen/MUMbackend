@@ -22,7 +22,6 @@ namespace MUMbackend.Controllers
         }
 
         // ✅ Lấy tất cả bài hát với pagination
-        // ✅ Lấy tất cả bài hát với pagination
         [HttpGet]
         public async Task<ActionResult<ApiResponse<PagedResponse<SongDto>>>> GetNewSongs(
             [FromQuery] int page = 1,
@@ -165,17 +164,26 @@ namespace MUMbackend.Controllers
 
         // ✅ Tìm kiếm bài hát theo tiêu đề
         [HttpGet("search")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<SongDto>>>> SearchSongs([FromQuery] string keyword)
+        public async Task<ActionResult<ApiResponse<PagedResponse<SongDto>>>> SearchSongs(
+    [FromQuery] string keyword,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 10)
         {
             if (string.IsNullOrWhiteSpace(keyword))
-                return BadRequest(ApiResponse<IEnumerable<SongDto>>.Fail("Từ khóa tìm kiếm không được để trống!"));
+                return BadRequest(ApiResponse<PagedResponse<SongDto>>.Fail("Từ khóa tìm kiếm không được để trống!"));
 
-            var songs = await _context.Songs
-                .Where(s => s.Title.Contains(keyword))
+            var query = _context.Songs
+                .Where(s => s.Title.Contains(keyword));
+
+            var totalItems = await query.CountAsync();
+
+            var songs = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            // ✅ Load tên nghệ sĩ và thể loại cho từng bài hát
             var songDtos = new List<SongDto>();
+
             foreach (var song in songs)
             {
                 var artist = await _context.Users.FindAsync(song.ArtistId);
@@ -187,19 +195,35 @@ namespace MUMbackend.Controllers
                     .Select(sg => sg.GenreId)
                     .ToListAsync();
 
-                var genreNames = new List<string>();
-                if (genreIds.Any())
-                {
-                    genreNames = await _context.Genres
-                        .Where(g => genreIds.Contains(g.Id))
-                        .Select(g => g.Name)
-                        .ToListAsync();
-                }
+                var genreNames = await _context.Genres
+                    .Where(g => genreIds.Contains(g.Id))
+                    .Select(g => g.Name)
+                    .ToListAsync();
 
-                songDtos.Add(SongMapper.ToDtoWithFullInfo(song, artistName, artistAvatar, genreIds, genreNames));
+                songDtos.Add(
+                    SongMapper.ToDtoWithFullInfo(
+                        song,
+                        artistName,
+                        artistAvatar,
+                        genreIds,
+                        genreNames
+                    )
+                );
             }
 
-            return Ok(ApiResponse<IEnumerable<SongDto>>.Ok($"Tìm thấy {songs.Count} bài hát!", songDtos));
+            var pagedResponse = new PagedResponse<SongDto>(
+                songDtos,
+                page,
+                pageSize,
+                totalItems
+            );
+
+            return Ok(
+                ApiResponse<PagedResponse<SongDto>>.Ok(
+                    $"Tìm thấy {totalItems} bài hát!",
+                    pagedResponse
+                )
+            );
         }
 
         // ✅ Tạo bài hát mới
@@ -332,10 +356,23 @@ namespace MUMbackend.Controllers
         public async Task<ActionResult<ApiResponse<object>>> DeleteSong(int id)
         {
             var song = await _context.Songs.FindAsync(id);
+
             if (song == null)
                 return NotFound(ApiResponse<object>.Fail("Không tìm thấy bài hát để xóa!"));
 
+            // 🔹 Xóa tất cả record trong PlaylistSongs trước
+            var playlistSongs = await _context.PlaylistSongs
+                .Where(ps => ps.SongId == id)
+                .ToListAsync();
+
+            if (playlistSongs.Any())
+            {
+                _context.PlaylistSongs.RemoveRange(playlistSongs);
+            }
+
+            // 🔹 Sau đó xóa bài hát
             _context.Songs.Remove(song);
+
             await _context.SaveChangesAsync();
 
             return Ok(ApiResponse<object>.Ok("Xóa bài hát thành công!"));

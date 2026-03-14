@@ -75,14 +75,39 @@ namespace MUMbackend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStatus(int id, UpdateReportStatusDto dto)
         {
-            var adminId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var adminId = 1;
 
             var success = await _service.UpdateStatusAsync(id, dto.Status, adminId);
 
             if (!success)
                 return NotFound();
 
-            return Ok();
+            return Ok("cập nhật trạng thái thành công!");
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> Search(
+    [FromQuery] string? keyword,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 25)
+        {
+            var result = await _service.SmartSearchReportsAsync(keyword, page, pageSize);
+
+            return Ok(ApiResponse<PagedResponse<ReportResponseDto>>
+                .Ok("Tìm kiếm thành công", result));
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _service.DeleteReportAsync(id);
+
+            if (!deleted)
+                return NotFound(ApiResponse<string>.Fail("Không tìm thấy report"));
+
+            return Ok(ApiResponse<string>.Ok("Xóa report thành công"));
         }
     }
 }

@@ -22,23 +22,25 @@ namespace MUMbackend.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<ApiResponse<PagedResponse<PlaylistResponseDto>>>> GetAll(
+    [FromQuery] int pageNumber = 1,
+    [FromQuery] int pageSize = 10)
         {
             var (playlists, totalItems) = await _playlistService.GetPagedAsync(pageNumber, pageSize);
 
-            var result = _mapper.Map<IEnumerable<PlaylistResponseDto>>(playlists);
-            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            var items = _mapper.Map<IEnumerable<PlaylistResponseDto>>(playlists);
 
-            return Ok(new
-            {
-                status = 200,
-                message = "Playlists retrieved successfully.",
+            var pagedResponse = new PagedResponse<PlaylistResponseDto>(
+                items,
                 pageNumber,
                 pageSize,
-                totalItems,
-                totalPages,
-                data = result
-            });
+                totalItems
+            );
+
+            return Ok(ApiResponse<PagedResponse<PlaylistResponseDto>>.Ok(
+                "Playlists retrieved successfully.",
+                pagedResponse
+            ));
         }
 
         [HttpGet("{userId}")]

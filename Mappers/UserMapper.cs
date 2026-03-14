@@ -19,6 +19,8 @@ namespace MUMbackend.Mappers
                 AvatarUrl = user.AvatarUrl,
                 Bio = user.Bio,
                 Role = user.Role,
+                CreatedAt = user.CreatedAt,
+                IsActive = user.IsActive,
             };
         }
 
@@ -26,6 +28,8 @@ namespace MUMbackend.Mappers
         {
             user.Username = dto.Username;
             user.Bio = dto.Bio;
+            user.Role = dto.Role;
+            user.IsActive = dto.IsActive;
             user.UpdatedAt = DateTime.Now;
         }
 
@@ -40,6 +44,20 @@ namespace MUMbackend.Mappers
                 CreatedAt = DateTime.Now,
             };
         }
-    
+
+        public static User ToEntity(UserDto dto)
+        {
+            return new User
+            {
+                Username = dto.Username,
+                Email = dto.Email,
+                Password = dto.Password,
+                AvatarUrl = dto.AvatarUrl,
+                Bio = dto.Bio,
+                Role = dto.Role,
+                UpdatedAt = DateTime.Now,
+            };
+        }
+
     }
 }

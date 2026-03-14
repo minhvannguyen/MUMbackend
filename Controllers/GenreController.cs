@@ -32,6 +32,33 @@ namespace MUMbackend.Controllers
             return Ok(ApiResponse<IEnumerable<GenreDto>>.Ok("Lấy danh sách thể loại thành công!", genreDtos));
         }
 
+        // ✅ Lấy tất cả thể loại
+        [HttpGet]
+        public async Task<ActionResult<ApiResponse<PagedResponse<GenreDto>>>> GetAllGenres([FromQuery] int page = 1,
+    [FromQuery] int pageSize = 10)
+        {
+            var query = _context.Genres.AsNoTracking();
+
+            var totalItems = await query.CountAsync();
+
+            var genres = await query
+                .OrderByDescending(s => s.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var genreDtos = genres.Select(GenreMapper.ToDto).ToList();
+
+            var pageGenres = new PagedResponse<GenreDto>(
+                genreDtos,
+                page,
+                pageSize,
+                totalItems
+            );
+            
+            return Ok(ApiResponse<PagedResponse<GenreDto>>.Ok("Lấy danh sách thể loại thành công!", pageGenres));
+        }
+
         // ✅ Lấy thể loại theo ID
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<GenreDto>>> GetGenre(int id)
@@ -57,18 +84,33 @@ namespace MUMbackend.Controllers
         }
 
         // ✅ Tìm kiếm thể loại theo tên
-        [HttpGet("search")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<GenreDto>>>> SearchGenres([FromQuery] string keyword)
+        [HttpGet]
+        public async Task<ActionResult<ApiResponse<PagedResponse<GenreDto>>>> SearchGenres([FromQuery] string keyword, int page = 1,
+            int pageSize = 20)
         {
             if (string.IsNullOrWhiteSpace(keyword))
                 return BadRequest(ApiResponse<IEnumerable<GenreDto>>.Fail("Từ khóa tìm kiếm không được để trống!"));
+            
+            var query = _context.Genres
+                .Where(u => EF.Functions.Like(u.Name, $"%{keyword}%"));
 
-            var genres = await _context.Genres
-                .Where(g => g.Name.Contains(keyword) || g.Slug.Contains(keyword))
+            var totalItems = await query.CountAsync();
+
+            var genres = await query
+                .OrderBy(u => u.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             var genreDtos = genres.Select(GenreMapper.ToDto).ToList();
-            return Ok(ApiResponse<IEnumerable<GenreDto>>.Ok($"Tìm thấy {genres.Count} thể loại!", genreDtos));
+
+            var pageGenres = new PagedResponse<GenreDto>(
+                genreDtos,
+                page,
+                pageSize,
+                totalItems
+            );
+            return Ok(ApiResponse<PagedResponse<GenreDto>>.Ok($"Tìm thấy {genres.Count} thể loại!", pageGenres));
         }
 
         // ✅ Tạo thể loại mới

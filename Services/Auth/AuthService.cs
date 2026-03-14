@@ -52,6 +52,7 @@ namespace MUMbackend.Services.Auth
             var (accessToken, refreshToken) = await _tokenService.GenerateTokenPairAsync(user);
             return new AuthResponse
             {
+                UserId = user.Id,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 Username = user.Username,

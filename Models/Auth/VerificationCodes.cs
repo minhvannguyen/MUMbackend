@@ -7,6 +7,7 @@ namespace MUMbackend.Models.Auth
     public class VerificationCodes
     {
         [Key]
+        [Column("Id", TypeName = "bigint")]
         public int Id { get; set; }
 
         [Required]

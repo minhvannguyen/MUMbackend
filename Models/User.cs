@@ -38,7 +38,7 @@ namespace MUMbackend.Models
         [Column("UpdatedAt", TypeName = "datetime")]
         public DateTime? UpdatedAt { get; set; }
         [Column("IsActive", TypeName = "bit")]
-        public bool IsActive { get; set; } = true;
+        public bool? IsActive { get; set; } = true;
 
         public ICollection<Follow> Followers { get; set; }
         public ICollection<Follow> Following { get; set; }

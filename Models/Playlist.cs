@@ -22,8 +22,9 @@ namespace MUMbackend.Models
 
         public string? CoverUrl { get; set; }
         [Column("TotalViews", TypeName = "bigint")]
-        public int TotalViews { get; set; }
-        public int? SaveCount { get; set; }
+        public int TotalViews { get; set; } = 0;
+        public int? SaveCount { get; set; } = 0;
+        public int? TotalSongs { get; set; } = 0;
 
         public bool IsPublic { get; set; } = false;
 

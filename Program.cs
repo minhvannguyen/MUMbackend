@@ -67,6 +67,7 @@ builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 // ✅ Thêm HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ToxicCommentService>();
+builder.Services.AddScoped<DashboardService>();
 
 // ✅ Đăng ký CookieTokenService
 builder.Services.AddScoped<CookieTokenService>();

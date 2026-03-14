@@ -11,7 +11,9 @@
     {
         public int Id { get; set; }
         public int ReporterId { get; set; }
+        public string? ReporterEmail { get; set; }
         public int TargetId { get; set; }
+        public string? TargetName { get; set; }
         public string TargetType { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;

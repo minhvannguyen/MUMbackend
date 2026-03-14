@@ -37,7 +37,8 @@ namespace MUMbackend.Controllers
             // ✅ Tạo claims cho cookie
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, auth.Email),
+                new Claim(ClaimTypes.NameIdentifier, auth.UserId.ToString()), // ✔ ID
+                new Claim(ClaimTypes.Email, auth.Email),
                 new Claim(ClaimTypes.Name, auth.Username),
                 new Claim(ClaimTypes.Role, auth.Role),
                 new Claim("AccessToken", auth.AccessToken),
@@ -223,6 +224,7 @@ public async Task<IActionResult> GoogleIdToken([FromBody] GoogleTokenRequest req
         public async Task<IActionResult> Me()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            Console.WriteLine("Claim value: " + userIdClaim);
 
             if (string.IsNullOrEmpty(userIdClaim))
                 return Unauthorized(new { message = "Chưa đăng nhập!" });
