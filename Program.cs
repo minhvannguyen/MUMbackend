@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.StaticFiles;
 using MUMbackend.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.HttpOverrides;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -77,7 +78,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // nếu dùng https cho FE, thêm "https://localhost:3000"
+        policy.WithOrigins("http://localhost:3000", "http://116.118.9.97") // nếu dùng https cho FE, thêm "https://localhost:3000"
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -90,7 +91,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.Cookie.Name = "MUM.Auth";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;      // ✅ luôn là Secure
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;      
         options.Cookie.SameSite = SameSiteMode.None;                  // ✅ cần cho cross-site
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
@@ -138,6 +139,10 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 var app = builder.Build();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 // ✅ Dòng này phải đặt TRƯỚC app.MapControllers()
 app.UseCors("AllowFrontend");
@@ -146,17 +151,10 @@ app.UseCors("AllowFrontend");
 app.UseCookiePolicy();
 
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
-
-// ✅ Phục vụ static files từ wwwroot
-app.UseStaticFiles();
+//app.UseHttpsRedirection();
 
 // ✅ Kích hoạt Authentication & Authorization
 app.UseAuthentication();
