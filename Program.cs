@@ -93,6 +93,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;      // ✅ luôn là Secure
         options.Cookie.SameSite = SameSiteMode.None;                  // ✅ cần cho cross-site
+        options.Cookie.Domain = ".116.118.9.97.nip.io";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
         options.LoginPath = "/api/auth/login";
@@ -146,6 +147,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 // ✅ Dòng này phải đặt TRƯỚC app.MapControllers()
 app.UseCors("AllowFrontend");
+app.UseCors("AllowClient");
 
 // ✅ Thêm Cookie Policy middleware
 app.UseCookiePolicy();
@@ -193,7 +195,7 @@ app.UseStaticFiles(new StaticFileOptions
     OnPrepareResponse = ctx =>
     {
         // CORS cho FE
-        ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "http://localhost:3000");
+        ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "https://music.116.118.9.97.nip.io");
         ctx.Context.Response.Headers.Append("Access-Control-Allow-Credentials", "true");
 
         // Streaming range requests cho audio
