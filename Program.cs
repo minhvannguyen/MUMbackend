@@ -78,7 +78,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://116.118.9.97") // nếu dùng https cho FE, thêm "https://localhost:3000"
+        policy.WithOrigins("http://localhost:3000", "https://music.116.118.9.97.nip.io") // nếu dùng https cho FE, thêm "https://localhost:3000"
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -91,7 +91,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.Cookie.Name = "MUM.Auth";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;      
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;      // ✅ luôn là Secure
         options.Cookie.SameSite = SameSiteMode.None;                  // ✅ cần cho cross-site
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
@@ -154,7 +154,7 @@ app.UseCookiePolicy();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 // ✅ Kích hoạt Authentication & Authorization
 app.UseAuthentication();
