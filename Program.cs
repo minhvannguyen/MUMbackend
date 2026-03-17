@@ -78,7 +78,7 @@
     {
         options.AddPolicy("AllowFrontend", policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://music.116.118.9.97.nip.io") // nếu dùng https cho FE, thêm "https://localhost:3000"
+            policy.WithOrigins("http://localhost:3000", "https://musicofminh.top") // nếu dùng https cho FE, thêm "https://localhost:3000"
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -211,7 +211,7 @@ app.UseCors("AllowFrontend");
         OnPrepareResponse = ctx =>
         {
             // CORS cho FE
-            ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "https://music.116.118.9.97.nip.io");
+            ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "https://musicofminh.top");
             ctx.Context.Response.Headers.Append("Access-Control-Allow-Credentials", "true");
 
             // Streaming range requests cho audio
