@@ -132,6 +132,13 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.MinimumSameSitePolicy = SameSiteMode.None;               // ✅ cho phép None
 });
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+
+
 // ✅ Load appsettings.json + appsettings.{Environment}.json + biến môi trường
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -146,6 +153,12 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 // ✅ Dòng này phải đặt TRƯỚC app.MapControllers()
 app.UseCors("AllowFrontend");
+
+app.UseCookiePolicy(new CookiePolicyOptions
+{
+    MinimumSameSitePolicy = SameSiteMode.None,
+    Secure = CookieSecurePolicy.Always
+});
 
 // ✅ Thêm Cookie Policy middleware
 app.UseCookiePolicy();
