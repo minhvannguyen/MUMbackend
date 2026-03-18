@@ -78,7 +78,7 @@
     {
         options.AddPolicy("AllowFrontend", policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://musicofminh.top") // nếu dùng https cho FE, thêm "https://localhost:3000"
+            policy.WithOrigins("http://localhost:3000", "http://localhost:3001", "https://musicofminh.top", "https://admin.musicofminh.top") // nếu dùng https cho FE, thêm "https://localhost:3000"
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -168,6 +168,8 @@ app.UseCors("AllowFrontend");
     // ✅ Thêm Cookie Policy middleware
     app.UseCookiePolicy();
 
+    //app.UseStaticFiles();
+
 
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -210,11 +212,15 @@ app.UseCors("AllowFrontend");
         ContentTypeProvider = contentTypeProvider,
         OnPrepareResponse = ctx =>
         {
-            // CORS cho FE
-            ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "https://musicofminh.top");
-            ctx.Context.Response.Headers.Append("Access-Control-Allow-Credentials", "true");
+            var origin = ctx.Context.Request.Headers["Origin"].ToString();
 
-            // Streaming range requests cho audio
+            if (origin == "https://musicofminh.top" || origin == "https://admin.musicofminh.top")
+            {
+                ctx.Context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+                ctx.Context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+            }
+
+            // Streaming audio
             ctx.Context.Response.Headers.Append("Accept-Ranges", "bytes");
         }
     });
