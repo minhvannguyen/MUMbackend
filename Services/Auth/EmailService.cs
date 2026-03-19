@@ -1,5 +1,5 @@
-﻿using System.Net.Mail;
-using System.Net;
+﻿using System.Net;
+using System.Net.Mail;
 
 namespace MUMbackend.Services.Auth
 {
@@ -12,25 +12,32 @@ namespace MUMbackend.Services.Auth
             _config = config;
         }
 
-        public async Task SendEmailAsync(string toEmail, string subject, string body)
+        public async Task SendOtpEmailAsync(string toEmail, string otp)
         {
-            var smtpHost = _config["Email:Smtp:Host"];
-            var smtpPort = int.Parse(_config["Email:Smtp:Port"]);
-            var smtpUser = _config["Email:Smtp:User"];
-            var smtpPass = _config["Email:Smtp:Pass"];
-
-            var client = new SmtpClient(smtpHost, smtpPort)
+            try
             {
-                Credentials = new NetworkCredential(smtpUser, smtpPass),
-                EnableSsl = true
-            };
+                var fromEmail = _config["Email:From"];
+                var password = _config["Email:Password"];
 
-            var mailMessage = new MailMessage(smtpUser, toEmail, subject, body)
+                var message = new MailMessage();
+                message.From = new MailAddress(fromEmail, "MUM");
+                message.To.Add(toEmail);
+                message.Subject = "Mã OTP xác thực";
+                message.Body = $"Xin chào,\n\nMã OTP của bạn là: {otp}\n\nHết hạn sau 5 phút.";
+
+                var smtp = new SmtpClient("smtp.gmail.com", 587)
+                {
+                    Credentials = new NetworkCredential(fromEmail, password),
+                    EnableSsl = true
+                };
+
+                await smtp.SendMailAsync(message);
+            }
+            catch (Exception ex)
             {
-                IsBodyHtml = true
-            };
-
-            await client.SendMailAsync(mailMessage);
+                Console.WriteLine($"Send mail error: {ex.Message}");
+                throw;
+            }
         }
     }
 }

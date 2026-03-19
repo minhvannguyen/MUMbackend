@@ -16,7 +16,6 @@
           "Microsoft.AspNetCore.OpenApi": "8.0.0",
           "Microsoft.EntityFrameworkCore": "9.0.10",
           "Microsoft.EntityFrameworkCore.SqlServer": "9.0.10",
-          "Microsoft.Extensions.ML": "5.0.0",
           "Microsoft.ML": "5.0.0",
           "Microsoft.ML.FastTree": "5.0.0",
           "MimeKit": "4.14.0",
@@ -205,7 +204,7 @@
         "dependencies": {
           "Microsoft.AspNetCore.Http.Abstractions": "2.3.0",
           "Microsoft.AspNetCore.WebUtilities": "2.3.0",
-          "Microsoft.Extensions.ObjectPool": "9.0.4",
+          "Microsoft.Extensions.ObjectPool": "8.0.11",
           "Microsoft.Extensions.Options": "9.0.10",
           "Microsoft.Net.Http.Headers": "2.3.0"
         }
@@ -499,36 +498,11 @@
           }
         }
       },
-      "Microsoft.Extensions.ML/5.0.0": {
-        "dependencies": {
-          "Microsoft.Bcl.AsyncInterfaces": "9.0.4",
-          "Microsoft.Extensions.DependencyInjection": "9.0.10",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.10",
-          "Microsoft.Extensions.Logging": "9.0.10",
-          "Microsoft.Extensions.ObjectPool": "9.0.4",
-          "Microsoft.Extensions.Options": "9.0.10",
-          "Microsoft.ML": "5.0.0",
-          "Newtonsoft.Json": "13.0.4",
-          "System.Buffers": "4.6.1",
-          "System.CodeDom": "9.0.4",
-          "System.Collections.Immutable": "9.0.4",
-          "System.Memory": "4.6.3",
-          "System.Reflection.Emit.Lightweight": "4.7.0",
-          "System.Runtime.CompilerServices.Unsafe": "6.1.2",
-          "System.Threading.Channels": "9.0.4"
-        },
+      "Microsoft.Extensions.ObjectPool/8.0.11": {
         "runtime": {
-          "lib/netstandard2.0/Microsoft.Extensions.ML.dll": {
-            "assemblyVersion": "1.0.0.0",
-            "fileVersion": "5.0.25.55704"
-          }
-        }
-      },
-      "Microsoft.Extensions.ObjectPool/9.0.4": {
-        "runtime": {
-          "lib/netstandard2.0/Microsoft.Extensions.ObjectPool.dll": {
-            "assemblyVersion": "9.0.0.0",
-            "fileVersion": "9.0.425.16403"
+          "lib/net8.0/Microsoft.Extensions.ObjectPool.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.0.1124.52116"
           }
         }
       },
@@ -1559,19 +1533,12 @@
       "path": "microsoft.extensions.logging.abstractions/9.0.10",
       "hashPath": "microsoft.extensions.logging.abstractions.9.0.10.nupkg.sha512"
     },
-    "Microsoft.Extensions.ML/5.0.0": {
+    "Microsoft.Extensions.ObjectPool/8.0.11": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-CFk/vP5u3TXZo8gwr7LHB6dyAnodYJOucf+TPigVjItcFkor0Z11sxhMOExJJoRTJ3tXSvyp3IUPYlZFiTehiA==",
-      "path": "microsoft.extensions.ml/5.0.0",
-      "hashPath": "microsoft.extensions.ml.5.0.0.nupkg.sha512"
-    },
-    "Microsoft.Extensions.ObjectPool/9.0.4": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-G7p1k2xVZ+2aVANz0JdSiafr+AHDHeS1kF8+Y0ABbIsByd0erOL59IDXBs9vcdJf3pPV/murO0mbtr4k40QxWw==",
-      "path": "microsoft.extensions.objectpool/9.0.4",
-      "hashPath": "microsoft.extensions.objectpool.9.0.4.nupkg.sha512"
+      "sha512": "sha512-6ApKcHNJigXBfZa6XlDQ8feJpq7SG1ogZXg6M4FiNzgd6irs3LUAzo0Pfn4F2ZI9liGnH1XIBR/OtSbZmJAV5w==",
+      "path": "microsoft.extensions.objectpool/8.0.11",
+      "hashPath": "microsoft.extensions.objectpool.8.0.11.nupkg.sha512"
     },
     "Microsoft.Extensions.Options/9.0.10": {
       "type": "package",

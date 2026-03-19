@@ -1,44 +1,35 @@
 ﻿namespace MUMbackend.Services
 {
-    using Microsoft.ML;
+    using Microsoft.Extensions.ML;
     using MUMbackend.Infrastructure;
     using MUMbackend.ToxicModelTrainer;
 
     public class ToxicCommentService
     {
-        private readonly PredictionEngine<ToxicData, ToxicPrediction> _engine;
+        private readonly PredictionEnginePool<ToxicData, ToxicPrediction> _pool;
 
         private readonly List<string> _blacklist = new()
-    {
-        "địt",
-        "địt mẹ",
-        "dm",
-        "đm",
-        "đụ",
-        "cc",
-        "cặc",
-        "lồn",
-        "lol",
-        "vl",
-        "vcl",
-        "ngu",
-        "óc chó",
-        "súc vật"
-    };
-
-        public ToxicCommentService()
         {
-            var mlContext = new MLContext();
+            "địt",
+            "địt mẹ",
+            "dm",
+            "đm",
+            "đụ",
+            "cc",
+            "cặc",
+            "lồn",
+            "lol",
+            "vl",
+            "vcl",
+            "ngu",
+            "óc chó",
+            "súc vật"
+        };
 
-            var modelPath = Path.Combine(
-    Directory.GetCurrentDirectory(),
-    "MLModels",
-    "toxic-model.zip"
-);
-
-            var model = mlContext.Model.Load(modelPath, out var modelInputSchema);
-
-            _engine = mlContext.Model.CreatePredictionEngine<ToxicData, ToxicPrediction>(model);
+        // ✅ Constructor duy nhất (DI inject pool)
+        public ToxicCommentService(PredictionEnginePool<ToxicData, ToxicPrediction> pool)
+        {
+            _pool = pool;
         }
 
         public bool IsToxic(string text)
@@ -55,13 +46,17 @@
                     return true;
             }
 
-            // 2️⃣ Check AI model
-            var result = _engine.Predict(new ToxicData
+            // 2️⃣ Check AI model (thread-safe)
+            var result = _pool.Predict(new ToxicData
             {
                 Text = text
             });
 
-            return result.Prediction;
+            Console.WriteLine($"TEXT: '{text}'");
+            Console.WriteLine($"PREDICT: {result.Prediction}");
+            Console.WriteLine($"SCORE: {result.Score}");
+
+            return result.Score > 0.75;
         }
     }
 }

@@ -11,10 +11,10 @@ namespace MUMbackend.Services.Auth
     public class VerificationService
     {
         private readonly AppDbContext _context;
-        private readonly GmailService _emailService;
+        private readonly EmailService _emailService;
         private readonly TokenService _tokenService;
 
-        public VerificationService(AppDbContext context, GmailService emailService, TokenService tokenService)
+        public VerificationService(AppDbContext context, EmailService emailService, TokenService tokenService)
         {
             _context = context;
             _emailService = emailService;
@@ -36,8 +36,7 @@ namespace MUMbackend.Services.Auth
             await _context.SaveChangesAsync();
 
             // 2️⃣ Gửi OTP qua Gmail API
-            var gmailService = new GmailService();
-            await gmailService.SendOtpEmailAsync(email, code);
+            await _emailService.SendOtpEmailAsync(email, code);
         }
 
         public async Task<bool> VerifyCodeAsync(string email, string code)

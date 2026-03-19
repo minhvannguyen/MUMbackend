@@ -8,6 +8,9 @@
     using MUMbackend.Hubs;
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.ML;
+using MUMbackend.Infrastructure;
+using MUMbackend.ToxicModelTrainer;
 
 
     var builder = WebApplication.CreateBuilder(args);
@@ -53,7 +56,7 @@
     builder.Services.AddScoped<TokenService>();
     builder.Services.AddScoped<RefreshTokenService>();
     builder.Services.AddScoped<VerificationService>();
-    builder.Services.AddScoped<GmailService>();
+    builder.Services.AddScoped<EmailService>();
     builder.Services.AddScoped<PlaylistService>();
     builder.Services.AddScoped<LikeService, LikeService>();
     builder.Services.AddAutoMapper(typeof(Program)); // Tự động quét tất cả Profile
@@ -67,8 +70,10 @@
     builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
     // ✅ Thêm HttpContextAccessor
     builder.Services.AddHttpContextAccessor();
-    builder.Services.AddSingleton<ToxicCommentService>();
-    builder.Services.AddScoped<DashboardService>();
+builder.Services.AddPredictionEnginePool<ToxicData, ToxicPrediction>()
+.FromFile("MLModels/toxic-model.zip");
+builder.Services.AddScoped<ToxicCommentService>();
+builder.Services.AddScoped<DashboardService>();
 
     // ✅ Đăng ký CookieTokenService
     builder.Services.AddScoped<CookieTokenService>();
