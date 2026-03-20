@@ -26,10 +26,18 @@ namespace MUMbackend.Mappers
 
         public static void ToEntityUpdate(User user, UserDto dto)
         {
-            user.Username = dto.Username;
-            user.Bio = dto.Bio;
-            user.Role = dto.Role;
-            user.IsActive = dto.IsActive;
+            if (!string.IsNullOrEmpty(dto.Username))
+                user.Username = dto.Username;
+
+            if (!string.IsNullOrEmpty(dto.Bio))
+                user.Bio = dto.Bio;
+
+            // ❗ chỉ update khi có giá trị
+            if (!string.IsNullOrEmpty(dto.Role))
+                user.Role = dto.Role;
+
+            if (dto.IsActive.HasValue)
+                user.IsActive = dto.IsActive.Value;
             user.UpdatedAt = DateTime.Now;
         }
 
